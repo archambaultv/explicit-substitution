@@ -1,0 +1,127 @@
+% !TEX root = ../main.tex
+
+\section{Piecewise linear function}\label{sec:pwl}
+
+We review in this section the basic mathmatical facts about piecewise linear
+functions that are needed for this work. Normally such functions are defined on
+the real numbers, but it is sufficient here to defined them on the natural
+numbers.
+
+\begin{definition}
+  \label{def:PW}
+  A function $f : \mathbb{N} \rightarrow \mathbb{N}$ is said to be piecewise
+  linear if there is a finite set $Q$ of intervals such that $Q$ is a partition
+  of $\mathbb{N}$ and $f$ is linear on every interval in $Q$.
+\end{definition}
+
+\begin{definition}
+  \label{def:PW_support}
+  A linear support is a finite set of pairs $(q,g)$ such that $q$ is an interval
+  of $\mathbb{N}$ and $g$ is a linear function. Also, the set of interval $q$ of
+  each pair forms a partition of $\mathbb{N}$.
+\end{definition}
+Since the intervals of a linear support are a partition of $\mathbb{N}$, we
+abuse the function notation and write $Q(x)$ for the value of the function $g$
+paired with the interval $q$ such that $x \in q$. Also, we say that $Q$ is the
+linear support of $f$ if $f(x) = Q(x)$ forall $x$.
+
+It is obvious from those definition that any piecewise linear function has a
+linear support and that a linear support defines a unique piecewise linear function.
+Note that the linear support of a piecewise linear function is not unique.
+\begin{lemma}
+  \label{thm:support_unique_pl}
+  A linear support defines a unique piecewise linear function.
+\end{lemma}
+\begin{lemma}
+  If $f$ is a piecewise linear function, then $f$ has a linear support.
+\end{lemma}
+
+\subsection{Composition of piecewise linear functions}
+
+
+
+\begin{lemma}
+  The composition $f = f_2 \circ f_1 $ of two piecewise linear functions $f_1$ and $f_2$ is also a
+  piecewise linear function. Its support $Q$ can be computed from the support
+  $Q_1$ and $Q_2$ of $f_1$ and $f_2$.
+\end{lemma}
+\begin{proof}
+  By lemma \ref{thm:support_unique_pl} we only need to show how to compute its
+  support. For each interval $[x,y]$ in $Q_1$ and its component $g$, since $g$
+  is linear we have an image interval $[x',y']$ where $x' = g(x)$ and $y' =
+  g(y)$ if $g(x) \le g(y)$ or $x' = g(y)$ and $y' = g(x)$ in the case $g(x) >
+  g(y)$.
+
+  Let $\Gamma$ be the set of all overlaps between an interval in $Q_2$ and the
+  interval $[x',y']$. 
+  \begin{equation*}
+    \Gamma = \{q \cap [x',y'] \ | \ q \in Q_2 \land q \cap [x',y'] \neq \emptyset \}
+  \end{equation*}
+  It is clear that $\Gamma$ is a set of intervals that is a partition of
+  $[x',y']$. Again, since $g$ is linear we can inverse the intervals in $\Gamma$
+  to expressed them intervals in the domains of $g$. 
+  \begin{equation*}
+    \Gamma^{-1} = \{[g^{-1}(x), g^{-1}(y)] \ | \ [x,y] \in \Gamma \}
+  \end{equation*}
+  $\Gamma^{-1}$ is a set of intervals that is a partition of $[x,y]$. The value
+  of $f$ on any point $x \in [x,y]$ is $f(x) = (g_2 \circ g)(x)$ where $g_2$ it
+  the component of $f_2$ associated with the interval 
+
+  
+  We can repeat this process for each element of $Q_1$. The union of all the
+  $Gamma$ at each iteration is the set $Q$. It is made only of interval since
+  each set $\Gamma$ at any iteration is limited to the interval
+
+\end{proof}
+
+% The backbone of a substitution is a piecewise linear function with all slopes
+% equal to one. We use the abbreviation $\text{pwl}$ to denote such functions.
+% Such a piecewise linear function can be characterized by its points of
+% discontinuity, where they are and the offset relative to the next segment. As
+% such, this kind of piecewise linear function can be represented by a list of
+% tuples $[(i_1,k_1),(i_2,k_2)\ldots(i_n,k_n)]$. The meaning of the tuple $(i, k)$
+% is that the "jump" by $k$ occurs \emph{at} the value $i$. When the context is
+% clear, we simple write $i_n$ and $k_n$ the first and second parameters of the
+% ith tuple in the list.
+
+% We call such a list of tuples the support of the function. To make the
+% representation unique, we ask that the list is well-formed with ordered tuples
+% and with all non zero offset.  Note that, We can always take an arbitrary list
+% of tuples and compute an well-formed one equivalent. Also, the identity function
+% is encoded as the well-formed support $[]$.
+
+% \begin{equation*}
+%   \text{pwl} \equiv [(i_1,k_1),(i_2,k_2)\ldots(i_n,k_n)]
+% \end{equation*}
+% \begin{equation*}
+%   \text{wf} \ [(i_1,k_1),(i_2,k_2)\ldots(i_n,k_n)] \leftrightarrow 
+%     (\forall n \, m, n < m \rightarrow i_n < i_m)  \land \forall n, k_n \neq 0 
+% \end{equation*}
+
+% From its reprensentation, we can easily compute the value of any piecewise linear function $f$.
+% \begin{gather*}
+%   \text{f} \ x = \text{lookup} \ x \ [(i_1,k_1),(i_2,k_2)\ldots(i_n,k_n)] \\
+%   \text{lookup} \ x \ [] = x \\
+%   \text{lookup} \ x \ [(i_1,k_1),(i_2,k_2)\ldots(i_n,k_n)] = 
+%   \begin{cases}
+%     x \quad \text{if $x < i_1$} \\
+%     k_1 + \text{lookup} \ x \ [(i_2,k_2)\ldots(i_n,k_n)] \quad \text{otherwise} 
+%   \end{cases}
+% \end{gather*}
+
+% Two piecewise linear functions are equal if their well-formed support are equal.
+% This is an important property of well-formed supports, because it means we can
+% compute the extensional equality of function by computing the intensional
+% equality of their supports.
+
+% \subsection{composition}\label{sec:pwl_composition}
+% \begin{align*}
+%   \text{compose}& \ [] \ f_2  ={} f_2 \\
+%   \text{compose}& \ f_1 \  [] ={} f_1 \\
+%   \text{compose}& \ ((i_1,k_1) :: x_1) \ ((i_2,k_2) :: x_2) ={} \\ 
+%     &\begin{cases}
+%        \quad \text{if $i_1 < i_2$} \\
+%       \quad \text{if $i_1 = i_2$} \\
+%       (i_2, k_2) :: \text{compose} \ ((i_1,k_1) :: x_1) \ x_2 \quad \text{if $i_1 > i_2$} \\
+%     \end{cases}
+% \end{align*}

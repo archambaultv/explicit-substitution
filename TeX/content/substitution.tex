@@ -1,0 +1,109 @@
+% !TEX root = ../main.tex
+
+\section{Substitution}\label{sec:substitution}
+
+A piecewise linear function, of type $\mathbb{N} \to \mathbb{N}$ can be extended
+to work on terms of the lambda calculus by viewing it as a function of variables
+to variables. So piecewise linear function are basically renaming functions.
+They map variables to other variables. A substitution is basically an extended
+piecewise linear function except that for some value, it returns an arbitrary
+terms and not just a variable. Since arbitrary terms can be variables, we need
+to distinguish when a substitution returns a variable due to renaming and when
+it does due to returning an arbitrary term. For the former, we say the function
+returns a renamed variable and we say, for the latter, that the function returns
+a substituted variable.
+
+% \subsection{Single triple}\label{sec:subs_single_triple}
+
+% By analogy with the section \ref{sec:pwl}, all we need to encode a substitution
+% is a list of triples. The extra information encodes the arbitrary term to be
+% returned. The signification of the triple $(i,t,k)$ is that at the value $i$,
+% the substitution returns the term $t$ and then for all other inputs $j$ greater
+% than $i$, the value is the variable $j + k$. Again, when the context is clear,
+% we simple write $i_n$, $t_n$ and $k_n$ the first, second and third parameters of
+% the ith triples in the list. Again, we call such a list the support of the
+% substitution.
+
+% \begin{equation*}
+%   \sigma \equiv [(i_1,t_1,k_1),(i_2,t_1,k_2)\ldots(i_n,t_n,k_n)]
+% \end{equation*}
+
+% From its reprensentation, we can easily compute the value of the substitution.
+% \begin{gather*}
+%   \sigma \ x = \text{lookup} \ x \ [(i_1,t_1,k_1),(i_2,t_1,k_2)\ldots(i_n,t_n,k_n)] \\
+%   \text{lookup} \ x \ [] = x \\
+%   \text{lookup} \ x \ [(i_1,t_1,k_1),(i_2,t_2,k_2)\ldots(i_n,t_n,k_n)] = 
+%   \begin{cases}
+%     x \quad \text{if $x < i_1$} \\
+%     t_1 \quad \text{if $x = i_1$} \\
+%     k_1 + \text{lookup} \ x \ [(i_2,k_2)\ldots(i_n,k_n)] \quad \text{otherwise} 
+%   \end{cases}
+% \end{gather*}
+
+% The support of the composition of two substitutions $\sigma_1$ and $\sigma_2$
+% can be computed from their support.
+% \begin{equation*}
+%   \sigma_2 \circ \sigma_1 = \text{compose} \ \sigma_1 \ \sigma_2
+% \end{equation*}
+% \begin{align*}
+%   \text{compose}& \ [] \ \sigma_2  ={} \sigma_2 \\
+%   \text{compose}& \ \sigma_1 \  [] ={} \sigma_1 \\
+%   \text{compose}& \ ((i_1,t_1,k_1) :: \sigma_1) \ ((i_2,t_2,k_2) :: \sigma_2) ={} \\ 
+%     &\begin{cases}
+%       (i_1,t_1[(i_2,t_2,k_2) :: \sigma_2],k_1) :: \text{compose} \ \sigma_1 \ ((i_2,t_2,k_2) :: \sigma_2) \quad \text{if $i_1 < i_2$} \\
+%       (i_1,t_1[(i_2,t_2,k_2) :: \sigma_2],k_1) :: \text{compose} \ \sigma_1 \ \sigma_2 \quad \text{if $i_1 = i_2$} \\
+%       (i_2,t_2,k_2) :: \text{compose} \ ((i_1,t_1,k_1) :: \sigma_1) \ \sigma_2 \quad \text{if $i_1 > i_2$} \\
+%     \end{cases}
+% \end{align*}
+
+% \subsection{Compound triple}\label{sec:subs_compound_triple} 
+
+% Just like in the previous section, we want to have a well-formed representation
+% so that we can easily compare substitution just by intensionaly comparing their
+% support. This is more complicated. Of course the triplets must be orderred, be
+% we should also avoid triplet that simply encodes a strait line. For example the
+% support $[(5,\#5,0)]$, meaning substitute the variable five by the variable five
+% and shift all others above by 0 is to be excluded as the identity support $[]$
+% as the same meaning. We should also exclude two consecutive triplets that encode
+% a strait line. For example $[(0,\#2,2), (1,\#3,0)]$, can actually be expressed
+% as $[(0,\#2,2)]$.
+
+% A second problem is when we have two consecutive triplets, say $(n,t_n,k_n)$ and
+% $(n+1,t_{n+1},k_{n+1})$. In this case, the value of $k_n$ is only used after
+% $n+1$ and the same goes for $k_{n+1}$. So we could replace $k_n$ and $k_{n+1}$
+% by  $k'_n$ and $k'_{n+1}$ as long as the sum is equal. To make the
+% representation unique, we could require $k_n = 0$. Another possibility, is to
+% use a list of terms inside the triplets instead of single term.
+
+% \begin{equation*}
+%   \sigma \equiv [(i_1,t_1,k_1),(i_2,t_1,k_2)\ldots(i_n,t_n,k_n)]
+% \end{equation*}
+% \begin{align*}
+%   \text{wf} \ [(i_1,t_1,k_1),(i_2,t_1,k_2)\ldots(i_n,t_n,k_n)] \leftrightarrow{} &
+%   \forall n \, m, n < m \rightarrow i_n < i_m \quad \land \\
+%   &\forall x \, n, t_n = \# x \rightarrow i_n + k_n \ne x
+% \end{align*}
+
+% From its reprensentation, we can easily compute the value of the substitution.
+% \begin{gather*}
+%   \sigma \ x = \text{lookup} \ x \ [(i_1,t_1,k_1),(i_2,t_1,k_2)\ldots(i_n,t_n,k_n)] \\
+%   \text{lookup} \ x \ [] = x \\
+%   \text{lookup} \ x \ [(i_1,t_1,k_1),(i_2,t_2,k_2)\ldots(i_n,t_n,k_n)] = 
+%   \begin{cases}
+%     x \quad \text{if $x < i_1$} \\
+%     t_1 \quad \text{if $x = i_1$} \\
+%     k_1 + \text{lookup} \ x \ [(i_2,k_2)\ldots(i_n,k_n)] \quad \text{otherwise} 
+%   \end{cases}
+% \end{gather*}
+
+% The support of the composition of two substitutions $\sigma_1$ and $\sigma_2$
+% can be computed from their support. The resulting support is also well-formed.
+% \begin{equation*}
+%   \sigma_2 \circ \sigma_1 = \text{compose} \ \sigma_1 \ \sigma_2
+% \end{equation*}
+% \begin{align*}
+%   \text{compose} \ [] \ \sigma_2  &= \sigma_2 \\
+%   \text{compose} \ \sigma_1 \  [] &= \sigma_1 \\
+%   \text{compose} \ ((i_1,t_1,k_1) :: \sigma_1) \ ((i_2,t_2,k_2) :: \sigma_2) &= \\
+%     &\quad (i_1,t_1[(i_2,t_2,k_2) :: \sigma_2],k_1) :: \text{compose} \ \sigma_1 \ ((i_2,t_2,k_2) :: \sigma_2) \quad \text{if $i_1 < i_2$}
+% \end{align*}
