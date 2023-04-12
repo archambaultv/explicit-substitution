@@ -4,73 +4,85 @@
 
 We review in this section the basic mathmatical facts about piecewise linear
 functions that are needed for this work. Normally such functions are defined on
-the real numbers, but it is sufficient here to defined them on the natural
+the real numbers, but it is sufficient for our purposes to defined them on the natural
 numbers.
 
 \begin{definition}
   \label{def:PW}
-  A function $f : \mathbb{N} \rightarrow \mathbb{N}$ is said to be piecewise
-  linear if there is a finite set $Q$ of intervals such that $Q$ is a partition
-  of $\mathbb{N}$ and $f$ is linear on every interval in $Q$.
+  For any $U \in \mathbb{N}$, a function $f : U \rightarrow \mathbb{N}$ is said
+  to be piecewise linear on $U$ if there exists a finite set $Q$ of pairs
+  such that for each pair $(q,g)$, $q$ is an interval of $U$, $g$ is a linear
+  function and $f$ is equal to $g$ on $q$. The intervals of $Q$ must be a
+  partition of $U$. The set $Q$ is called the set of components.
 \end{definition}
+Note that from the definition, a set of components $Q$ of $f$ is not unique. Also, if
+$Q$ is a set of components of $f$, we will when it makes sense abuse the
+function notation and write $Q(x)$ for $f(x)$ since by definition there is a
+single pair $(q, g)$ of $Q$ where $x \in q$ and we have $g = f$ on $q$. 
 
-\begin{definition}
-  \label{def:PW_support}
-  A linear support is a finite set of pairs $(q,g)$ such that $q$ is an interval
-  of $\mathbb{N}$ and $g$ is a linear function. Also, the set of interval $q$ of
-  each pair forms a partition of $\mathbb{N}$.
-\end{definition}
-Since the intervals of a linear support are a partition of $\mathbb{N}$, we
-abuse the function notation and write $Q(x)$ for the value of the function $g$
-paired with the interval $q$ such that $x \in q$. Also, we say that $Q$ is the
-linear support of $f$ if $f(x) = Q(x)$ forall $x$.
-
-It is obvious from those definition that any piecewise linear function has a
-linear support and that a linear support defines a unique piecewise linear function.
-Note that the linear support of a piecewise linear function is not unique.
 \begin{lemma}
-  \label{thm:support_unique_pl}
-  A linear support defines a unique piecewise linear function.
+  \label{thm:union_pwl}
+  If $f_1 : U_1 \rightarrow \mathbb{N}$ and $f_2 : U_2 \rightarrow \mathbb{N}$
+  are piecewise linear function such that $U_1 \cap U_2 = \emptyset$, then the
+  function $f : U_1 \cup U_2 \rightarrow \mathbb{N}$ defined as
+  \begin{equation}
+    f(x) = \begin{cases}
+      f_1(x) \quad \text{if $x \in U_1$} \\
+      f_2(x) \quad \text{if $x \in U_2$} 
+    \end{cases}
+  \end{equation}
+  is also a piewise linear function and $Q_1 \cup Q_2$ is a set of components of $f$.
 \end{lemma}
-\begin{lemma}
-  If $f$ is a piecewise linear function, then $f$ has a linear support.
-\end{lemma}
+\begin{proof}
+  $Q_1 \cup Q_2$ meat all the requirements of defintion \ref{def:PW} to show
+  that $f$ is a piecewise linear function.
+\end{proof}
 
 \subsection{Composition of piecewise linear functions}
 
 
-
 \begin{lemma}
-  The composition $f = f_2 \circ f_1 $ of two piecewise linear functions $f_1$ and $f_2$ is also a
-  piecewise linear function. Its support $Q$ can be computed from the support
-  $Q_1$ and $Q_2$ of $f_1$ and $f_2$.
+  The composition $f = f_2 \circ f_1 $ of two piecewise linear functions $f_1 :
+  \mathbb{N} \rightarrow \mathbb{N}$ and $f_2 : \mathbb{N} \rightarrow
+  \mathbb{N}$ is also a piecewise linear function. A set of components $Q$ can
+  be obtained from the sets of components $Q_1$ and $Q_2$ of $f_1$ and $f_2$.
 \end{lemma}
 \begin{proof}
-  By lemma \ref{thm:support_unique_pl} we only need to show how to compute its
-  support. For each interval $[x,y]$ in $Q_1$ and its component $g$, since $g$
-  is linear we have an image interval $[x',y']$ where $x' = g(x)$ and $y' =
-  g(y)$ if $g(x) \le g(y)$ or $x' = g(y)$ and $y' = g(x)$ in the case $g(x) >
-  g(y)$.
-
-  Let $\Gamma$ be the set of all overlaps between an interval in $Q_2$ and the
-  interval $[x',y']$. 
-  \begin{equation*}
-    \Gamma = \{q \cap [x',y'] \ | \ q \in Q_2 \land q \cap [x',y'] \neq \emptyset \}
-  \end{equation*}
-  It is clear that $\Gamma$ is a set of intervals that is a partition of
-  $[x',y']$. Again, since $g$ is linear we can inverse the intervals in $\Gamma$
-  to expressed them intervals in the domains of $g$. 
-  \begin{equation*}
-    \Gamma^{-1} = \{[g^{-1}(x), g^{-1}(y)] \ | \ [x,y] \in \Gamma \}
-  \end{equation*}
-  $\Gamma^{-1}$ is a set of intervals that is a partition of $[x,y]$. The value
-  of $f$ on any point $x \in [x,y]$ is $f(x) = (g_2 \circ g)(x)$ where $g_2$ it
-  the component of $f_2$ associated with the interval 
-
+  We show how to build a set of components $Q$ for $f$. For each pair $(q, g)$
+  in $Q_1$, we will build a piecewise linear function $h : q \rightarrow
+  \mathbb{N}$ with a set of components $X$ such that $h(x) = f(x) = (f_2 \circ
+  f_1)(x)$ if $x \in q$. It follows from lemma \ref{thm:union_pwl} that the
+  union of all such set $X$ for all pair in $Q_1$ is a set of components of $f$.
   
-  We can repeat this process for each element of $Q_1$. The union of all the
-  $Gamma$ at each iteration is the set $Q$. It is made only of interval since
-  each set $\Gamma$ at any iteration is limited to the interval
+  We now show how to build a set $X$ from an element $([x,y], g)$ of $Q_1$.
+  The special case where $g$ is constant with value $a$ implies that $f(u) =
+  f_2(a)$ if $u \in [x,y]$. Since $u$ belongs to an unique pair $(q_2, g_2)$ in
+  $Q_2$, we define $X = \{[x,y], g_a\}$ where $g_a$ is the constant function
+  $g_a(x) = g_2(a)$ and we have that for all $u \in [x,y]$, $X(u) = g_a(u) =
+  g_2(a) = f_2(a) = f(u)$.
+
+  If $g$ is not a constant, since $g$ is linear we have an image interval $[x',
+  y']$ where $x' = \text{min}(g(x),g(y))$ and $y' = \text{max}(g(x),g(y))$. Let
+  $\Gamma$ be the set of all components in $Q_2$ that overlaps with the interval
+  $[x',y']$ restricted to that overlap.
+  \begin{equation*}
+    \Gamma = \{(q \cap [x',y'], h) \ | \ (q, h) \in Q_2 \land q \cap [x',y'] \neq \emptyset \}
+  \end{equation*}
+  It is clear that $\Gamma$ is a partition of $[x',y']$ and a set of components
+  for the function $f_2$ restricted on $[x',y']$. Again, since $g$ is linear and
+  not a constant we can inverse the intervals in $\Gamma$ to expressed them as a
+  partition of $[x,y]$. We therefore define the set $X$ like this:
+  \begin{equation*}
+    X = \{([a^{-1}, b^{-1}], h \circ g) \ | \ 
+    ([a,b], h) \in \Gamma, 
+    a^{-1} = \text{min}(g^{-1}(a), g^{-1}(b)), 
+    b^{-1} = \text{max}(g^{-1}(a), g^{-1}(b)) \}
+  \end{equation*}
+  As mentionned above, the intervals of $X$ are a partition of $[x,y]$. For any
+  pair $(p, j \circ g)$ of $X$, we have that $g = f_1$ on $p$ since
+  $p \in q$ and we have that $j = f_2$ on the image interval of $p$ by
+  $g$ by construction of $X$. So for all pairs $X(x) = (f_2 \circ f_1)(x)$ and
+  thus $X$ is a set of components of $f$ restricted on $[x,y]$.
 
 \end{proof}
 
