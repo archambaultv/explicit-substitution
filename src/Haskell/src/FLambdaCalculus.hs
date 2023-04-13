@@ -1,8 +1,11 @@
-{-# LANGUAGE DeriveFunctor, DeriveFoldable, DeriveTraversable, TemplateHaskell, TypeFamilies #-}
+{-# LANGUAGE DeriveFunctor, DeriveFoldable, DeriveTraversable, TemplateHaskell, PatternSynonyms #-}
 
 module FLambdaCalculus
-    ( LTermF(..),
-      LTerm,
+    ( FTermF(..),
+      FTerm,
+      pattern FVar,
+      pattern FAbs,
+      pattern FApp,
       Rename,
       Substitution,
       countBinders,
@@ -18,43 +21,52 @@ import Data.Functor.Foldable (cata)
 
 import Fix
 
-data LTermF r = LVarF Int
-              | LAbsF r
-              | LAppF r r
+data FTermF r = FVarF Int
+              | FAbsF r
+              | FAppF r r
   deriving (Show, Eq, Functor, Foldable, Traversable)
 
-$(deriveShow1 ''LTermF)
+$(deriveShow1 ''FTermF)
 
-type LTerm = Fix LTermF
+type FTerm = Fix FTermF
 type Rename = Int -> Int
-type Substitution = Int -> LTerm
+type Substitution = Int -> FTerm
 
-countBinders :: LTermF r -> Int
-countBinders (LAbsF _) = 1
+pattern FVar :: Int -> FTerm
+pattern FVar x = Fix (FVarF x)
+
+pattern FAbs :: FTerm -> FTerm
+pattern FAbs x = Fix (FAbsF x)
+
+pattern FApp :: FTerm -> FTerm -> FTerm
+pattern FApp e1 e2 = Fix (FAppF e1 e2)
+
+countBinders :: FTermF r -> Int
+countBinders (FAbsF _) = 1
 countBinders _ = 0
 
-withBinders :: LTerm -> CFix (Ann Int) LTermF
+withBinders :: FTerm -> CFix (Ann Int) FTermF
 withBinders t = withBinders' 0 t
 
-withBinders' :: Int -> LTerm -> CFix (Ann Int) LTermF
+withBinders' :: Int -> FTerm -> CFix (Ann Int) FTermF
 withBinders' n t = cata go t n
-  where go :: Alg LTermF (Int -> CFix (Ann Int) LTermF)
+  where go :: Alg FTermF (Int -> CFix (Ann Int) FTermF)
         go x = \m -> 
                 let myBinder = countBinders x
                 in Fix $ Compose (m, fmap (\f -> f (m + myBinder)) x)
 
-rename :: Rename -> LTerm -> LTerm
+rename :: Rename -> FTerm -> FTerm
 rename r t = cata go $ withBinders t
-  where go :: Alg (Compose (Ann Int) LTermF) LTerm
-        go (Compose (n, LVarF i)) = Fix $ if i < n then LVarF i else LVarF $ r (i - n) + n
+  where go :: Alg (Compose (Ann Int) FTermF) FTerm
+        go (Compose (n, FVarF i)) = if i < n then FVar i else FVar $ r (i - n) + n
         go (Compose (_, x)) = Fix x
 
-substitute :: Substitution -> LTerm -> LTerm
+substitute :: Substitution -> FTerm -> FTerm
 substitute s t = cata go $ withBinders t
-  where go :: Alg (Compose (Ann Int) LTermF) LTerm
-        go (Compose (n, LVarF i)) = rename (+ n) $ s (i - n)
+  where go :: Alg (Compose (Ann Int) FTermF) FTerm
+        go (Compose (n, FVarF i)) = rename (+ n) $ s (i - n)
         go (Compose (_, x)) = Fix x
 
 -- Perform beta application
-beta :: LTerm -> LTerm -> LTerm
-beta body arg = substitute (\i -> if i == 0 then arg else Fix $ LVarF (i - 1)) body
+beta :: FTerm -> FTerm -> FTerm
+beta body arg = substitute (\i -> if i == 0 then arg else FVar (i - 1)) body

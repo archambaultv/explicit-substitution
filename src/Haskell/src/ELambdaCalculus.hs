@@ -1,10 +1,12 @@
 {-# LANGUAGE DeriveFunctor, PatternSynonyms #-}
 
 module ELambdaCalculus
-    ( LTermF(..),
-      LTerm,
+    ( FTermF(..),
+      FTerm,
       ETermF(..),
       ETerm,
+      Rename,
+      Substitution,
       pattern EVar,
       pattern EAbs,
       pattern EApp,
@@ -18,9 +20,9 @@ module ELambdaCalculus
     ) where
 
 import Data.Fix (Fix(..))
-import FLambdaCalculus (LTermF(..), LTerm, Rename, countBinders)
+import FLambdaCalculus (FTermF(..), FTerm, Rename, countBinders)
 
-data ETermF r = Plain (LTermF r)
+data ETermF r = Plain (FTermF r)
               | ESubsF r (Int -> r)
   deriving (Functor)
 
@@ -28,15 +30,15 @@ type ETerm = Fix ETermF
 type Substitution = Int -> ETerm
 
 pattern EVar :: Int -> ETerm
-pattern EVar x = Fix (Plain (LVarF x))
+pattern EVar x = Fix (Plain (FVarF x))
 
 pattern EAbs :: ETerm -> ETerm
-pattern EAbs x = Fix (Plain (LAbsF x))
+pattern EAbs x = Fix (Plain (FAbsF x))
 
 pattern EApp :: ETerm -> ETerm -> ETerm
-pattern EApp e1 e2 = Fix (Plain (LAppF e1 e2))
+pattern EApp e1 e2 = Fix (Plain (FAppF e1 e2))
 
-pattern EPlain :: LTermF ETerm -> ETerm
+pattern EPlain :: FTermF ETerm -> ETerm
 pattern EPlain x = Fix (Plain x)
 
 pattern ESubs :: ETerm -> Substitution -> ETerm
@@ -62,8 +64,8 @@ pushSub x = x
 mergeSub :: Substitution -> Substitution -> Substitution
 mergeSub s1 s2 n = 
   case s1 n of
-    EVar i => s2 i
-    x => ESubs x s2
+    (EVar i) -> s2 i
+    x -> ESubs x s2
 
 pushMergeSub :: ETerm -> ETerm
 pushMergeSub (ESubs (EVar i) s) = s i
