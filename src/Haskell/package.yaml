@@ -1,7 +1,7 @@
 name:                Haskell
 version:             0.1.0.0
 github:              "archambaultv/Haskell"
-license:             MIT-0
+license:             OtherLicense # MIT-0 not recognised by cabal
 author:              "Vincent Archambault-B"
 maintainer:          "vincentarchambault@icloud.com"
 copyright:           "Vincent Archambault-B"
@@ -20,6 +20,9 @@ description:         Please see the README on GitHub at <https://github.com/arch
 
 dependencies:
 - base >= 4.7 && < 5
+- data-fix
+- recursion-schemes
+- deriving-compat
 
 ghc-options:
 - -Wall
