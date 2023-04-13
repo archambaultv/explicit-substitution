@@ -25,12 +25,12 @@ single pair $(q, g)$ of $Q$ where $x \in q$ and we have $g = f$ on $q$.
   If $f_1 : U_1 \rightarrow \mathbb{N}$ and $f_2 : U_2 \rightarrow \mathbb{N}$
   are piecewise linear function such that $U_1 \cap U_2 = \emptyset$, then the
   function $f : U_1 \cup U_2 \rightarrow \mathbb{N}$ defined as
-  \begin{equation}
+  \begin{equation*}
     f(x) = \begin{cases}
       f_1(x) \quad \text{if $x \in U_1$} \\
       f_2(x) \quad \text{if $x \in U_2$} 
     \end{cases}
-  \end{equation}
+  \end{equation*}
   is also a piewise linear function and $Q_1 \cup Q_2$ is a set of components of $f$.
 \end{lemma}
 \begin{proof}
@@ -85,55 +85,3 @@ single pair $(q, g)$ of $Q$ where $x \in q$ and we have $g = f$ on $q$.
   thus $X$ is a set of components of $f$ restricted on $[x,y]$.
 
 \end{proof}
-
-% The backbone of a substitution is a piecewise linear function with all slopes
-% equal to one. We use the abbreviation $\text{pwl}$ to denote such functions.
-% Such a piecewise linear function can be characterized by its points of
-% discontinuity, where they are and the offset relative to the next segment. As
-% such, this kind of piecewise linear function can be represented by a list of
-% tuples $[(i_1,k_1),(i_2,k_2)\ldots(i_n,k_n)]$. The meaning of the tuple $(i, k)$
-% is that the "jump" by $k$ occurs \emph{at} the value $i$. When the context is
-% clear, we simple write $i_n$ and $k_n$ the first and second parameters of the
-% ith tuple in the list.
-
-% We call such a list of tuples the support of the function. To make the
-% representation unique, we ask that the list is well-formed with ordered tuples
-% and with all non zero offset.  Note that, We can always take an arbitrary list
-% of tuples and compute an well-formed one equivalent. Also, the identity function
-% is encoded as the well-formed support $[]$.
-
-% \begin{equation*}
-%   \text{pwl} \equiv [(i_1,k_1),(i_2,k_2)\ldots(i_n,k_n)]
-% \end{equation*}
-% \begin{equation*}
-%   \text{wf} \ [(i_1,k_1),(i_2,k_2)\ldots(i_n,k_n)] \leftrightarrow 
-%     (\forall n \, m, n < m \rightarrow i_n < i_m)  \land \forall n, k_n \neq 0 
-% \end{equation*}
-
-% From its reprensentation, we can easily compute the value of any piecewise linear function $f$.
-% \begin{gather*}
-%   \text{f} \ x = \text{lookup} \ x \ [(i_1,k_1),(i_2,k_2)\ldots(i_n,k_n)] \\
-%   \text{lookup} \ x \ [] = x \\
-%   \text{lookup} \ x \ [(i_1,k_1),(i_2,k_2)\ldots(i_n,k_n)] = 
-%   \begin{cases}
-%     x \quad \text{if $x < i_1$} \\
-%     k_1 + \text{lookup} \ x \ [(i_2,k_2)\ldots(i_n,k_n)] \quad \text{otherwise} 
-%   \end{cases}
-% \end{gather*}
-
-% Two piecewise linear functions are equal if their well-formed support are equal.
-% This is an important property of well-formed supports, because it means we can
-% compute the extensional equality of function by computing the intensional
-% equality of their supports.
-
-% \subsection{composition}\label{sec:pwl_composition}
-% \begin{align*}
-%   \text{compose}& \ [] \ f_2  ={} f_2 \\
-%   \text{compose}& \ f_1 \  [] ={} f_1 \\
-%   \text{compose}& \ ((i_1,k_1) :: x_1) \ ((i_2,k_2) :: x_2) ={} \\ 
-%     &\begin{cases}
-%        \quad \text{if $i_1 < i_2$} \\
-%       \quad \text{if $i_1 = i_2$} \\
-%       (i_2, k_2) :: \text{compose} \ ((i_1,k_1) :: x_1) \ x_2 \quad \text{if $i_1 > i_2$} \\
-%     \end{cases}
-% \end{align*}
