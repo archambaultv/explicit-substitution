@@ -1,4 +1,10 @@
-Copyright 2023, Vincent Archambault-B
+LICENSING TERMS
 
-All files and the output PDF are licensed under the Creative Commons Attribution
-4.0 International License. (https://creativecommons.org/licenses/by/4.0/)
+Copyright 2023, Vincent Archambault
+
+1. All files under TeX/* and the output PDF are licensed under the Creative Commons
+   Attribution 4.0 International License.
+   (https://creativecommons.org/licenses/by/4.0/)
+
+2. All source files under src/* are licensed under the MIT No Attribution
+   (https://opensource.org/license/mit-0/)

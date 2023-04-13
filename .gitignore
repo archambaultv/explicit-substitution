@@ -1,6 +1,10 @@
 ## Mac os specific
 .DS_Store
 
+## Haskell
+src/Haskell/.stack-work/
+*~
+
 ## Ignores the generated PDF
 TeX/main.pdf
 
@@ -305,3 +309,4 @@ TSWLatexianTemp*
 # option is specified. Footnotes are the stored in a file with suffix Notes.bib.
 # Uncomment the next line to have this generated file ignored.
 #*Notes.bib
+src/Haskell/Haskell.cabal
