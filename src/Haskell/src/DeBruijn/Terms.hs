@@ -1,8 +1,7 @@
-module LambdaCalculus
+module DeBruijn.Terms
     ( LTerm(..),
       shift,
-      subst,
-      beta
+      subst
     ) where
 
 -- Standard definition
@@ -21,17 +20,13 @@ shift' _ n (LVar i) = LVar (i + n)
 shift' p n (LAbs t) = LAbs (shift' (p + 1) n t)
 shift' p n (LApp t1 t2) = LApp (shift' p n t1) (shift' p n t2)
 
--- subst arg t replaces the free variable #0 of t by arg.
+-- subst body arg replaces the free variable #0 of body by arg.
 subst :: LTerm -> LTerm -> LTerm
-subst arg t = subst' 0 arg t
+subst body arg = subst' 0 body arg
 
 subst' :: Int -> LTerm -> LTerm -> LTerm
-subst' p _ (LVar i) | i < p = LVar i
-subst' p arg (LVar i) | i == p = shift p arg
-subst' _ _ (LVar i)  = LVar (i - 1)
-subst' p arg (LAbs t) = LAbs (subst' (p + 1) arg t)
-subst' p arg (LApp t1 t2) = LApp (subst' p arg t1) (subst' p arg t2)
-
--- Perform beta application
-beta :: LTerm -> LTerm -> LTerm
-beta body arg = subst arg body
+subst' p (LVar i) _ | i < p = LVar i
+subst' p (LVar i) arg | i == p = shift p arg
+subst' _ (LVar i) _ = LVar (i - 1)
+subst' p (LAbs t) arg = LAbs (subst' (p + 1) arg t)
+subst' p (LApp t1 t2) arg = LApp (subst' p arg t1) (subst' p arg t2)
