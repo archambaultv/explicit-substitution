@@ -1,33 +1,55 @@
 module DeBruijn.SmallStep
-    ( SmallStep(..),
-      SmallSteps,
+    ( ParStep,
+      ParSteps,
       reduce,
-      allPossibleSteps
+      allPossibleSteps,
+      reduceMany,
+      validParSteps
     ) where
 
+import Data.Functor.Foldable (ListF(..), cata, para)
+import Data.List.NonEmpty (NonEmpty(..))
+import qualified Data.List.NonEmpty as NE
+
+import Fix
 import DeBruijn.Terms
 
--- small steps
--- This is basically just a path to indicate where to perform a beta reduction
-data SmallStep = SSAbs SmallStep
-               | SSAppL SmallStep
-               | SSAppR SmallStep
-               | SSBeta
-               deriving (Show, Eq)
+-- Small steps and parallel small steps
+-- We simply can annotate each node with False if we don't or can't perform beta
+-- reduction and True if we should perform beta reduction.
+-- The classic small step relation is when there is one and only one True
+-- With multiple True or with only False, this is the (reflexive) parallel small step relation
+type ParStep = CFix (Ann Bool) TermF
 
--- Kleene closure
-type SmallSteps = [SmallStep] 
+reduce :: ParStep -> Term
+reduce (CAnn True (TAppF (CAnn _ (TAbsF t1)) t2)) = 
+  let t1' = reduce t1
+      t2' = reduce t2
+  in substitute (\n -> if n == 0 then t2' else TVar (n - 1)) t1'
+reduce (CAnn _ x) = Fix $ fmap reduce x
 
-reduce :: LTerm -> SmallStep -> LTerm
-reduce (LAbs x) (SSAbs s) = LAbs $ reduce x s
-reduce (LApp x y) (SSAppL s) = LApp (reduce x s) y
-reduce (LApp x y) (SSAppR s) = LApp x (reduce y s)
-reduce (LApp (LAbs body) arg) SSBeta = subst body arg
-reduce _ _ = error "Invalid arguments"
+allPossibleSteps :: Term -> ParStep
+allPossibleSteps = cata go
+  where go :: Alg TermF ParStep
+        go x = if betaPattern (fmap unAnn x)
+               then CAnn True x
+               else CAnn False x
 
-allPossibleSteps :: LTerm -> [SmallStep]
-allPossibleSteps (LVar _) = []
-allPossibleSteps (LAbs t) = map SSAbs $ allPossibleSteps t
-allPossibleSteps (LApp t1 t2) = 
-  map SSAppL (allPossibleSteps t1) ++
-  map SSAppR (allPossibleSteps t2)
+-- Kleene closure 
+-- Of course we expect that the nth term in the sequence has the same shape of
+-- the reduced (n-1)th term. 
+-- Note that many classic small step can be encoded within a single ParStep
+type ParSteps = NonEmpty ParStep
+
+reduceMany :: ParSteps -> Term
+reduceMany xs = reduce $ NE.last xs
+
+validParSteps :: ParSteps -> Bool
+validParSteps (x :| xs) = para go (x : xs)
+  where go :: ListF ParStep ([ParStep], Bool) -> Bool
+        go Nil = True
+        go (Cons _ ([], valid)) = valid
+        go (Cons a ((b:_), valid)) =
+          if reduce a == removeAnn b
+          then valid
+          else False

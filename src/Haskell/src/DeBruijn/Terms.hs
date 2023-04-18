@@ -1,32 +1,81 @@
+{-# LANGUAGE DeriveFunctor, DeriveFoldable, DeriveTraversable, 
+    TemplateHaskell, PatternSynonyms, TupleSections #-}
+
 module DeBruijn.Terms
-    ( LTerm(..),
-      shift,
-      subst
+    ( TermF(..),
+      Term,
+      pattern TVar,
+      pattern TAbs,
+      pattern TApp,
+      Renaming,
+      Substitution,
+      countBinders,
+      coAlgBinders,
+      rename,
+      substitute,
+      betaPattern,
+      betaPatternFix,
+      betaPatternAnn
     ) where
 
--- Standard definition
-data LTerm = LVar Int
-           | LAbs LTerm
-           | LApp LTerm LTerm
-           deriving (Show, Eq)
+import Text.Show.Deriving (deriveShow1)
+import Data.Eq.Deriving (deriveEq1)
+import Data.Functor.Compose (Compose(..))
+import Data.Functor.Foldable (hylo)
 
--- shift n t adds n to all the free variables in t
-shift :: Int -> LTerm -> LTerm
-shift n t = shift' 0 n t
+import Fix
 
-shift' :: Int -> Int -> LTerm -> LTerm
-shift' p _ (LVar i) | i < p = LVar i
-shift' _ n (LVar i) = LVar (i + n)
-shift' p n (LAbs t) = LAbs (shift' (p + 1) n t)
-shift' p n (LApp t1 t2) = LApp (shift' p n t1) (shift' p n t2)
+data TermF r = TVarF Int
+             | TAbsF r
+             | TAppF r r
+  deriving (Show, Eq, Functor, Foldable, Traversable)
 
--- subst body arg replaces the free variable #0 of body by arg.
-subst :: LTerm -> LTerm -> LTerm
-subst body arg = subst' 0 body arg
+$(deriveShow1 ''TermF)
+$(deriveEq1 ''TermF)
 
-subst' :: Int -> LTerm -> LTerm -> LTerm
-subst' p (LVar i) _ | i < p = LVar i
-subst' p (LVar i) arg | i == p = shift p arg
-subst' _ (LVar i) _ = LVar (i - 1)
-subst' p (LAbs t) arg = LAbs (subst' (p + 1) arg t)
-subst' p (LApp t1 t2) arg = LApp (subst' p arg t1) (subst' p arg t2)
+type Term = Fix TermF
+type Renaming = Int -> Int
+type Substitution = Int -> Term
+
+pattern TVar :: Int -> Term
+pattern TVar x = Fix (TVarF x)
+
+pattern TAbs :: Term -> Term
+pattern TAbs x = Fix (TAbsF x)
+
+pattern TApp :: Term -> Term -> Term
+pattern TApp e1 e2 = Fix (TAppF e1 e2)
+
+-- How many binders a term introduce
+countBinders :: TermF r -> Int
+countBinders (TAbsF _) = 1
+countBinders _ = 0
+
+-- A coAlgebra to count binders. To use for example in a hylomorphism
+coAlgBinders :: CoAlg (Compose (Ann Int) TermF) (Term, Int)
+coAlgBinders (Fix x, n) =
+  let n' = countBinders x + n
+  in Ann n' (fmap (,n') x) 
+
+rename :: Renaming -> Term -> Term
+rename r t = hylo go coAlgBinders (t, 0)
+  where go :: Alg (Compose (Ann Int) TermF) Term
+        go (Ann n (TVarF i)) = if i < n then TVar i else TVar $ r (i - n) + n
+        go (Ann _ x) = Fix x
+
+substitute :: Substitution -> Term -> Term
+substitute s t = hylo go coAlgBinders (t, 0) 
+  where go :: Alg (Compose (Ann Int) TermF) Term
+        go (Ann n (TVarF i)) = rename (+ n) $ s (i - n)
+        go (Ann _ x) = Fix x
+
+-- beta pattern
+betaPattern :: TermF (TermF r) -> Bool
+betaPattern (TAppF (TAbsF _) _) = True
+betaPattern _ = False
+
+betaPatternFix :: Term -> Bool
+betaPatternFix x = betaPattern $ fmap unFix $ unFix x
+
+betaPatternAnn :: CFix (Ann b) TermF -> Bool
+betaPatternAnn x = betaPattern $ fmap (snd . getCompose . unFix) $ (snd . getCompose . unFix) x
