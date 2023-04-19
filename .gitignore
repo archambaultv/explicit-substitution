@@ -3,6 +3,7 @@
 
 ## Haskell
 src/Haskell/.stack-work/
+src/Haskell/*.lock
 *~
 
 ## Ignores the generated PDF
