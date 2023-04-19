@@ -10,7 +10,8 @@ module Attribute (
   pattern Attr,
   pattern AttrF,
   unAttr,
-  removeAttr
+  removeAttr,
+  toAttrAlg
 ) where
 
 import Data.Fix (Fix(..))
@@ -41,3 +42,12 @@ removeAttr :: (Functor f) => Attr a f -> Fix f
 removeAttr = cata go
   where go :: Alg (AttrF a f) (Fix f)
         go (AttrF _ f) = Fix f
+
+
+toAttrAlg :: Alg f a -> Alg (AttrF b f) a
+toAttrAlg alg (AttrF _ x) = alg x
+
+-- toAttrCoAlg :: CoAlg f (Fix a) -> CoAlg f (Attr b a)
+-- toAttrCoAlg coAlg x@(Attr b _) = fmap (\x -> Attr b (unFix x)) 
+--                              $ coAlg 
+--                              $ removeAttr x 
