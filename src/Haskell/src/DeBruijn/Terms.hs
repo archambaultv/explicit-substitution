@@ -15,7 +15,8 @@ module DeBruijn.Terms
       substitute,
       betaPattern,
       betaPatternFix,
-      betaPatternAnn
+      betaPatternAnn,
+      applyBeta
     ) where
 
 import Text.Show.Deriving (deriveShow1)
@@ -23,7 +24,7 @@ import Data.Eq.Deriving (deriveEq1)
 import Data.Functor.Compose (Compose(..))
 import Data.Functor.Foldable (hylo)
 
-import Fix
+import Attribute
 
 data TermF r = TVarF Int
              | TAbsF r
@@ -36,6 +37,7 @@ $(deriveEq1 ''TermF)
 type Term = Fix TermF
 type Renaming = Int -> Int
 type Substitution = Int -> Term
+type SubstitutionAnn b = Int -> CFix (Ann b) TermF
 
 pattern TVar :: Int -> Term
 pattern TVar x = Fix (TVarF x)
@@ -70,6 +72,13 @@ substitute s t = hylo go coAlgBinders (t, 0)
         go (Ann _ x) = Fix x
 
 -- beta pattern
+applyBeta :: Term -> Term
+applyBeta (TApp (TAbs t1) t2) = substitute (\n -> if n == 0 then t2 else TVar (n - 1)) t1
+applyBeta x = 
+  let x' :: TermF (TermF String)
+      x' = fmap (fmap (const "") . unFix) $ unFix x
+  in error $ "Cannot apply beta reduction on term " ++ show x'
+
 betaPattern :: TermF (TermF r) -> Bool
 betaPattern (TAppF (TAbsF _) _) = True
 betaPattern _ = False

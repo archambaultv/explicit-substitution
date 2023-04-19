@@ -1,5 +1,6 @@
 module DeBruijn.SmallStep
     ( ParStep,
+      ParStepF,
       ParSteps,
       reduce,
       allPossibleSteps,
@@ -7,11 +8,12 @@ module DeBruijn.SmallStep
       validParSteps
     ) where
 
+import Data.Functor.Compose
 import Data.Functor.Foldable (ListF(..), cata, para)
 import Data.List.NonEmpty (NonEmpty(..))
 import qualified Data.List.NonEmpty as NE
 
-import Fix
+import Attribute
 import DeBruijn.Terms
 
 -- Small steps and parallel small steps
@@ -20,13 +22,15 @@ import DeBruijn.Terms
 -- The classic small step relation is when there is one and only one True
 -- With multiple True or with only False, this is the (reflexive) parallel small step relation
 type ParStep = CFix (Ann Bool) TermF
+type ParStepF = Compose (Ann Bool) TermF
 
 reduce :: ParStep -> Term
-reduce (CAnn True (TAppF (CAnn _ (TAbsF t1)) t2)) = 
-  let t1' = reduce t1
-      t2' = reduce t2
-  in substitute (\n -> if n == 0 then t2' else TVar (n - 1)) t1'
-reduce (CAnn _ x) = Fix $ fmap reduce x
+reduce = cata go
+  where go :: Alg ParStepF Term
+        go (Ann isStep t) =
+          if isStep && betaPattern (fmap unFix t)
+          then applyBeta $ Fix t
+          else Fix t
 
 allPossibleSteps :: Term -> ParStep
 allPossibleSteps = cata go

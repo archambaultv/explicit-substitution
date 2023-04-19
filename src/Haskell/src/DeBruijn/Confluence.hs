@@ -12,11 +12,16 @@ triop = allPossibleSteps
 
 -- triangle property
 -- Given a parstep p1 of term t, 
--- we can define another parstep p2 such that:
---    reducyMany [p1, p2] = reduce (triop t)
--- triangle :: ParStep -> ParStep
--- triangle s =
---   let t = removeAnn s
+-- we can define another parstep p2 = triangle p1 such that:
+--    reduceMany [p1, p2] = reduce (triop t)
+triangle :: ParStep -> ParStep
+triangle = cata go 
+  where go :: Alg ParStepF ParStep
+        go (Ann isStep t) = 
+          case (isStep, betaPattern (fmap unAnn t))
+            (_, False) -> CAnn False t
+            (False, True) -> CAnn True t
+            (True, True) -> applyBeta $ Fix t
 
 
 -- confluence :: LTerm -> SmallSteps -> SmallSteps -> (SmallSteps, SmallSteps)
