@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveTraversable, TemplateHaskell, PatternSynonyms, TupleSections #-}
+{-# LANGUAGE DeriveTraversable, TemplateHaskell #-}
 
 module DeBruijn.Terms
     ( TermF(..),
@@ -9,7 +9,7 @@ module DeBruijn.Terms
       Renaming,
       Substitution,
       SubstitutionAttr,
-      countBinders,
+      binders,
       coAlgBinders,
       rename,
       substitute,
@@ -19,9 +19,12 @@ module DeBruijn.Terms
       applyBeta
     ) where
 
+import Data.Monoid (Sum(..))
+import Data.Group (invert)
 import Text.Show.Deriving (deriveShow1)
 import Data.Eq.Deriving (deriveEq1)
 import Data.Functor.Foldable (hylo)
+import Data.Void (vacuous)
 
 import Attribute
 
@@ -33,10 +36,13 @@ data TermF r = TVarF Int
 $(deriveShow1 ''TermF)
 $(deriveEq1 ''TermF)
 
+instance HasLeaves TermF where
+  type Leaf TermF = Sum Int
+  fromLeaf n = TVarF (getSum n)
+  isLeaf (TVarF n) = Just (Sum n)
+  isLeaf _ = Nothing
+
 type Term = Fix TermF
-type Renaming = Int -> Int
-type Substitution = Int -> Term
-type SubstitutionAttr b = Int -> Attr b TermF
 
 pattern TVar :: Int -> Term
 pattern TVar x = Fix (TVarF x)
@@ -48,31 +54,19 @@ pattern TApp :: Term -> Term -> Term
 pattern TApp e1 e2 = Fix (TAppF e1 e2)
 
 -- How many binders a term introduce
-countBinders :: TermF r -> Int
-countBinders (TAbsF _) = 1
-countBinders _ = 0
+binders :: TermF r -> TermF (Sum Int, r)
+binders (TAbsF r) = TAbsF (1, r)
+binders x = fmap (0,) x
 
--- A coAlgebra to count binders. To use for example in a hylomorphism
-coAlgBinders :: CoAlg (AttrF Int TermF) (Term, Int)
-coAlgBinders (Fix x, n) =
-  let n' = countBinders x + n
-  in AttrF n' (fmap (,n') x)
+rename :: (Sum Int -> Sum Int) -> Term -> Term
+rename = renameDeBruijn binders
 
-rename :: Renaming -> Term -> Term
-rename r t = hylo go coAlgBinders (t, 0)
-  where go :: Alg (AttrF Int TermF) Term
-        go (AttrF n (TVarF i)) = if i < n then TVar i else TVar $ r (i - n) + n
-        go (AttrF _ x) = Fix x
-
-substitute :: Substitution -> Term -> Term
-substitute s t = hylo go coAlgBinders (t, 0)
-  where go :: Alg (AttrF Int TermF) Term
-        go (AttrF n (TVarF i)) = rename (+ n) $ s (i - n)
-        go (AttrF _ x) = Fix x
+substitute :: (Sum Int -> Term) -> Term -> Term
+substitute = substituteDeBruijn binders
 
 -- beta pattern
 applyBeta :: Term -> Term
-applyBeta (TApp (TAbs t1) t2) = substitute (\n -> if n == 0 then t2 else TVar (n - 1)) t1
+applyBeta (TApp (TAbs t1) t2) = substitute (\n -> if n == 0 then t2 else Fix $ vacuous $ fromLeaf (n <> invert 1)) t1
 applyBeta x =
   let x' :: TermF (TermF String)
       x' = (fmap (const "") . unFix <$> unFix x)

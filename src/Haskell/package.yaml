@@ -23,6 +23,12 @@ dependencies:
 - data-fix
 - recursion-schemes
 - deriving-compat
+- groups
+
+default-extensions:
+- TupleSections
+- TypeFamilies
+- PatternSynonyms
 
 ghc-options:
 - -Wall
