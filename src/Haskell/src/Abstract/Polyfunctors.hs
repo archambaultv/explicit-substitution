@@ -15,7 +15,7 @@ module Abstract.Polyfunctors (
 ) where
 
 import Fixpoint
-import Abstract.AST
+import Abstract.Ast
 
 -- Identity functor
 newtype I a = I a
@@ -54,9 +54,13 @@ data PolyLabel = Id -- Identity
 
 instance ToAst (K c) PolyLabel c where
   toAst (K c) = N1 $ LeafF c
+  fromAst (N1 (LeafF c)) = Just (K c)
+  fromAst _ = Nothing
 
 instance ToAst I PolyLabel c where
   toAst (I x) = N1 $ NodeF Id [x]
+  fromAst (N1 (NodeF Id [x])) = Just (I x)
+  fromAst _ = Nothing
 
 instance (ToAst f PolyLabel c, ToAst g PolyLabel c) => ToAst (f :+: g) PolyLabel c where
   toAst (InL x) = 
@@ -69,6 +73,14 @@ instance (ToAst f PolyLabel c, ToAst g PolyLabel c) => ToAst (f :+: g) PolyLabel
     in case r' of
         N1 g' -> N2 $ NodeF R [g']
         _ -> error "Limited to two levels"
+
+  fromAst (N2 (NodeF L [f])) = do
+    f' <- fromAst (N1 f)
+    pure $ InL f'
+  fromAst (N2 (NodeF R [g])) = do
+    g' <- fromAst (N1 g)
+    pure $ InR g'
+  fromAst _ = Nothing
 
 instance (ToAst f PolyLabel c, ToAst g PolyLabel c) => ToAst (f :*: g) PolyLabel c where
   toAst (x1 :*: x2) = 

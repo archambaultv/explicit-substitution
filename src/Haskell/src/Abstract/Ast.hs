@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveTraversable, ScopedTypeVariables, MultiParamTypeClasses #-}
+{-# LANGUAGE DeriveTraversable, ScopedTypeVariables, MultiParamTypeClasses, FunctionalDependencies #-}
 
 module Abstract.Ast (
   AstF(..),
@@ -12,6 +12,7 @@ module Abstract.Ast (
   astMatch
 ) where
 
+import Data.Maybe (fromJust)
 import Data.Functor.Foldable (hylo)
 
 import Fixpoint
@@ -23,8 +24,11 @@ data AstF n a r = LeafF a
 
 type Ast n a = Fix (AstF n a)
 
-class ToAst f n a where
+class ToAst f n a | f -> n where
   toAst :: f r -> NFix (AstF n a) r
+  fromAst :: NFix (AstF n a) r -> Maybe (f r)
+  fromAst' ::  NFix (AstF n a) r -> f r
+  fromAst' x = fromJust $ fromAst x
 
 -- Pattern for composed annotation
 pattern Leaf :: a -> Ast n a
