@@ -1,16 +1,17 @@
 module DeBruijn.Confluence
-    ( triop
+    ( 
+        -- triop
     ) where
 
 import Data.Functor.Foldable
-import Attribute
+import Fixpoint
 import DeBruijn.Terms
 import DeBruijn.SmallStep
 
 
 -- Triangle operator
-triop :: Term -> ParStep
-triop = allPossibleSteps
+-- triop :: Term -> ParStep
+-- triop = allPossibleSteps
 
 -- triangle property
 -- Given a parstep p1 of term t, 

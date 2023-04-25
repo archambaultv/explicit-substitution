@@ -24,6 +24,8 @@ dependencies:
 - recursion-schemes
 - deriving-compat
 - groups
+- containers
+- bifunctors
 
 default-extensions:
 - TupleSections

@@ -47,7 +47,7 @@ removeAttr = cata go
 
 -- Annotate a term with attributes
 withAttr :: forall f b. (Functor f) => 
-  NatTransK f b ->
+  (forall r. f r -> b) ->
   Fix f ->
   Attr b f
 withAttr nt = cata go
