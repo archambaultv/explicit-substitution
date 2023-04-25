@@ -47,14 +47,15 @@ instance (Functor f, Functor g) => Functor (f :.: g) where
     fmap f (Cmp fgx) = Cmp (fmap (fmap f) fgx)
 
 data PolyLabel = Id -- Identity
+               | Cst -- Constant
                | L -- Left
                | R -- Right
                | P -- Product
-              -- | C -- Compose
+               | C PolyLabel -- Compose
 
 instance ToAst (K c) PolyLabel c where
-  toAst (K c) = N1 $ LeafF c
-  fromAst (N1 (LeafF c)) = Just (K c)
+  toAst (K c) = N2 $ NodeF Cst [LeafF c]
+  fromAst (N2 (NodeF Cst [LeafF c])) = Just (K c)
   fromAst _ = Nothing
 
 instance ToAst I PolyLabel c where
@@ -90,6 +91,12 @@ instance (ToAst f PolyLabel c, ToAst g PolyLabel c) => ToAst (f :*: g) PolyLabel
         (N1 f', N1 g') -> N2 $ NodeF P [f', g']
         _ -> error "Limited to two levels"
 
+  fromAst (N2 (NodeF P [x1, x2])) = do
+    x1' <- fromAst (N1 x1)
+    x2' <- fromAst (N1 x2)
+    pure $ x1' :*: x2'
+  fromAst _ = Nothing
+
 instance (Functor f, ToAst f PolyLabel c, ToAst g PolyLabel c) => ToAst (f :.: g) PolyLabel c where
   toAst :: forall r. (f :.: g) r ->  NFix (AstF PolyLabel c) r
   toAst (Cmp x) = 
@@ -98,12 +105,22 @@ instance (Functor f, ToAst f PolyLabel c, ToAst g PolyLabel c) => ToAst (f :.: g
         f'g' :: NFix (AstF PolyLabel c) (NFix (AstF PolyLabel c) r)
         f'g' = toAst fg'
     in case f'g' of
-        N1 (LeafF y) -> N1 (LeafF y)
+        N1 (LeafF y) -> N2 (NodeF (C Cst) [LeafF y])
         N1 (NodeF n xs) ->
           let xs' = map fromN1 xs
-          in N2 $ NodeF n xs'
+          in N2 $ NodeF (C n) xs'
         _ -> error "Limited to two levels"
 
     where fromN1 :: NFix (AstF PolyLabel c) r -> AstF PolyLabel c r
           fromN1 (N1 y) = y
           fromN1 _ = error "Limited to two levels"
+
+  fromAst :: forall r. NFix (AstF PolyLabel c) r -> Maybe ((f :.: g) r)
+  fromAst (N2 (NodeF (C Cst) [LeafF y])) = do
+    k <- fromAst (N1 (LeafF y))
+    return (Cmp k)
+  fromAst (N2 (NodeF (C n) xs)) = do
+    x <- traverse (fromAst . N1) (NodeF n xs) :: Maybe (AstF PolyLabel c (g r))
+    y <- fromAst (N1 x) :: Maybe (f (g r))
+    return (Cmp y)
+  fromAst _ = Nothing
