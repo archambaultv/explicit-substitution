@@ -3,12 +3,16 @@
 module Abstract.AST (
   AstF(..),
   Ast,
+  pattern Leaf,
+  pattern Node,
   ToAst(..),
+  mapLeaf,
+  mapNode,
+  AstPat,
+  astMatch
 ) where
 
-import Data.Bifunctor.TH
-import Data.Bifunctor (first)
-import Data.Functor.Foldable (ana, hylo)
+import Data.Functor.Foldable (hylo)
 
 import Fixpoint
 
@@ -22,34 +26,39 @@ type Ast n a = Fix (AstF n a)
 class ToAst f n a where
   toAst :: f r -> NFix (AstF n a) r
 
--- -- -- Applies the change only if f is a leaf
--- -- changeLeaf :: (AST f) => (Leaf f -> Leaf f) -> f r -> f r
--- -- changeLeaf f x = 
--- --   case toTree x of
--- --     NodeF l [] -> fromTree $ NodeF (fromLeaf $ f $ toLeaf l) []
--- --     _ -> x
+-- Pattern for composed annotation
+pattern Leaf :: a -> Ast n a
+pattern Leaf a = Fix (LeafF a)
 
--- toAST :: (AST f) => Fix f -> Tree (Label f)
--- toAST = ana (natTransCoAlg toTree)
+-- Pattern for annotation
+pattern Node :: n -> [Ast n a] -> Ast n a
+pattern Node n ns = Fix (NodeF n ns)
+{-# COMPLETE Leaf, Node #-}
 
--- fromAST :: (AST f, Functor f) => Tree (Label f) -> Fix f
--- fromAST = ana (natTransCoAlg fromTree)
+-- Applies the change only if f is a leaf
+mapLeaf :: (a -> b) -> AstF n a r -> AstF n b r
+mapLeaf f (LeafF x) = LeafF (f x)
+mapLeaf _ (NodeF n rs) = (NodeF n rs)
 
--- isLeaf :: (AST f) => f r -> Bool
--- isLeaf = null . subForestF . toTree
+-- Applies the change only if f is a leaf
+mapNode :: (n1 -> n2) -> AstF n1 a r -> AstF n2 a r
+mapNode f (NodeF n rs) = NodeF (f n) rs
+mapNode _ (LeafF x) = (LeafF x)
 
--- type ASTPat f = CFix Maybe (TreeF (Label f -> Bool))
+type AstPat n a = CFix Maybe (AstF (n -> Bool) (a -> Bool))
 
--- fpatMatch :: forall f. (AST f) => ASTPat f -> Fix f -> Bool
--- fpatMatch pat t = hylo alg coAlg (t, pat)
---   where coAlg :: CoAlg (TreeF Bool) (Fix f, ASTPat f)
---         coAlg (_, Fix (Compose Nothing)) = NodeF True []
---         coAlg (x, Fix (Compose (Just (NodeF criteria pats)))) =
---           let (NodeF n xs) = toTree (unFix x)
---               match = criteria n
---               sameLength = length xs == length pats
---               next = zip xs pats
---           in NodeF (match && sameLength) next
+astMatch :: AstPat n a -> Ast n a -> Bool
+astMatch pat t = hylo alg coAlg (t, pat)
+  where coAlg :: CoAlg (AstF Bool Bool) (Ast n a, AstPat n a)
+        coAlg (_, Fix (Compose Nothing)) = LeafF True
+        coAlg (Leaf x, Fix (Compose (Just (LeafF assert)))) = LeafF (assert x)
+        coAlg (Node x xs, Fix (Compose (Just (NodeF assert pats)))) = 
+          let match = assert x
+              sameLength = length xs == length pats
+              next = zip xs pats
+          in NodeF (match && sameLength) next
+        coAlg (_,_) = LeafF False
 
---         alg :: Alg (TreeF Bool) Bool
---         alg (NodeF x xs) = x && and xs
+        alg :: Alg (AstF Bool Bool) Bool
+        alg (LeafF x) = x
+        alg (NodeF x xs) = x && and xs
