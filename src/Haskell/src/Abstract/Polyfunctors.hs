@@ -2,7 +2,7 @@
     UndecidableInstances, MultiParamTypeClasses, ScopedTypeVariables, InstanceSigs #-}
 
 -- Poly functors can be converted to AST
--- This is a proof of concepts. The limited levels of Fixpoint.NFix
+-- This is a proof of concept. The limited levels of Fixpoint.NFix
 -- obviously limit the functionnality of the code below
 
 module Abstract.Polyfunctors (
