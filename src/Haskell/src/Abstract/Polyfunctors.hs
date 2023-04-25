@@ -10,6 +10,7 @@ module Abstract.Polyfunctors (
   K(..),
   (:+:)(..),
   (:*:)(..),
+  (:.:)(..),
   PolyLabel(..)
 ) where
 
