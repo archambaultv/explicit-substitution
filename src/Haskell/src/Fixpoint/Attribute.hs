@@ -1,8 +1,6 @@
 {-# LANGUAGE RankNTypes, ScopedTypeVariables, FlexibleInstances, FlexibleContexts #-}
 
 module Fixpoint.Attribute (
-  Compose(..),
-  CFix,
   Attr,
   AttrF,
   pattern Attr,
@@ -16,11 +14,9 @@ module Fixpoint.Attribute (
 
 
 import Data.Functor.Foldable (cata, ana)
-import Data.Functor.Compose (Compose(..))
 
 import Fixpoint.Definitions
 
-type CFix w f = Fix (Compose w f)
 type Attr b f = CFix ((,) b) f -- Attribute or attributed
 type AttrF b f = Compose ((,) b) f
 
