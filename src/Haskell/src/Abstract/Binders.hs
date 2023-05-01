@@ -20,20 +20,18 @@ import Abstract.Ast
 class Binding f v | f -> v where
   tovar :: f r -> Maybe v
   toleaf :: v -> f Void
-  -- How to rename when going under a binder
-  -- under gives a function f : v -> Maybe v for each r
+  -- How to rename when going under/over a binder
+  -- gives two functions f g :: v -> Maybe v for each r
   -- s.t. f v = Just v' means the variable v is renamed v' when
   -- going under f. f v = Nothing means that it is not possible to look for
   -- a variable v under f (shadowing).
   -- All elements in the set will have an ouput value (Just v') for the function f : v -> Maybe r
-  under :: Set v -> f r -> f (v -> Maybe v, r)
-  -- over is the reverse of under,
-  -- if under gives a function f : v -> Maybe v for each r,
-  -- over gives the function g : v -> Maybe v such that
+
+  -- g is the reverse of f, such that
   -- g s v' = Just v -> f s v = Just v'
   -- g s v = Nothing -> ∄ v' s.t. f s v' = Just v
   -- All elements in the set will have an ouput value (Just v') for the function f : v -> Maybe r
-  over :: Set v -> f r -> f (v -> Maybe v, r)
+  rename :: Set v -> f r -> f (v -> Maybe v, v -> Maybe v, r)
 
 freevar :: forall f v. (Functor f, Binding f v, Foldable f, Ord v) => Fix f -> Set v
 freevar = cata go
@@ -42,28 +40,22 @@ freevar = cata go
   go x = case tovar x of
           Just v' -> S.singleton v'
           Nothing -> let b :: f (Set v)
-                         b = fmap update $ over S.empty x
+                         b = fmap update $ rename S.empty x
                      in S.unions b
 
-  update :: ((v -> Maybe v), Set v) -> Set v
-  update (f, s) = S.fromList $ mapMaybe f $ S.toAscList s
+  update :: (v -> Maybe v, v -> Maybe v, Set v) -> Set v
+  update (_, over, s) = S.fromList $ mapMaybe over $ S.toAscList s
 
-rename :: forall f v. (Functor f, Binding f v) => (v -> v) -> Fix f -> Fix f
-rename a b = ana go (a,b)
-  where go :: CoAlg f (v -> v, Fix f)
-        go (r, Fix x) =
-          case tovar x of
-            Just v' -> vacuous $ toleaf $ r v'
-            Nothing -> 
-              let x1 :: f (v -> Maybe v, Fix f)
-                  x1 = under S.empty x
-                  x2 :: f (v -> v, Fix f)
-                  x2 = (fmap . first) (merge r) x1
-              in x2
 
-        merge :: (v -> v) -> (v -> Maybe v) -> (v -> v)
-        merge s1 s2 v = maybe v s1 (s2 v)
-
+underNt :: forall f v r. (Functor f, Binding f v) => (v -> v) -> f r -> f (v -> v, r)
+underNt r x = case tovar x of
+              Just v' -> vacuous $ toleaf $ r v'
+              Nothing -> 
+                let rM :: v -> Maybe v
+                    rM = pure . r
+                    xRename :: f (v -> Maybe v, v -> Maybe v, r)
+                    xRename = rename S.empty x
+                in fmap (\(under, over, r) -> (\v -> maybe v id $ over v >>= rM >>= under,r)) xRename
 
 -- substitute :: forall f v. (Functor f, Foldable f, Binding f v, Ord v) => (v -> Fix f, Set v) -> Fix f -> Fix f
 -- substitute (s, fv) body = apo go (s, S.union fv (freevar body), body)
